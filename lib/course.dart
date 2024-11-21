@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'profile_page.dart'; // Import the profile page
 
 void main() {
   runApp(const MyApp());
@@ -26,135 +27,149 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Courses'),
+        backgroundColor: Colors.orange,
+      ),
       body: Container(
         color: Colors.white,
         padding: const EdgeInsets.all(20),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Good Morning,',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 16,
-                        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Good Morning,',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
                       ),
-                      Text(
-                        'Taffy',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                    Text(
+                      'Taffy',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
-                  Container(
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfilePage()),
+                    );
+                  },
+                  child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.orange[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.favorite,
-                      color: Colors.red,
-                      size: 24,
+                    child: const CircleAvatar(
+                      radius: 20,
+                      backgroundImage: AssetImage('assets/Taffy.jpg'),
+                      backgroundColor: Colors.grey,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
 
-              // Badges Section
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.purple[700],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        '18 days streak!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+            // Badges Section
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.purple[700],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '18 days streak!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.purple[600],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        '3 more Exercise!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.purple[600],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '3 more Exercise!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[700],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        '1 Hour to go!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[700],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '1 Hour to go!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
 
-              // Subject Cards
-              SubjectCard(
-                title: 'Vocab',
-                description: 'Ready to start your day with some fun vocab exercise?!',
-                color: Colors.orange[400]!,
-              ),
-              const SizedBox(height: 12),
-              SubjectCard(
-                title: 'Reading',
-                description: 'Ready to do some fun reading?!',
-                color: Colors.orange[500]!,
-              ),
-              const SizedBox(height: 12),
-              SubjectCard(
-                title: 'Mathematics',
-                description: 'Ready to do mathtastic exercises?!',
-                color: Colors.orange[600]!,
-              ),
-            ],
-          ),
+            // Subject Cards
+            SubjectCard(
+              title: 'Vocab',
+              description: 'Ready to start your day with some fun vocab exercise?!',
+              color: Colors.orange[400]!,
+            ),
+            const SizedBox(height: 12),
+            SubjectCard(
+              title: 'Reading',
+              description: 'Ready to do some fun reading?!',
+              color: Colors.orange[500]!,
+            ),
+            const SizedBox(height: 12),
+            SubjectCard(
+              title: 'Mathematics',
+              description: 'Ready to do mathtastic exercises?!',
+              color: Colors.orange[600]!,
+            ),
+          ],
         ),
       ),
     );
