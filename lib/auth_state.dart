@@ -14,6 +14,8 @@ class AuthState extends ChangeNotifier {
   String get bio => _currentUser?.bio ?? 'No bio yet';
   String get profileImage => _currentUser?.profileImage ?? 'default';
 
+  String? get parentPasscode => _currentUser?.parentPasscode;
+
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     _loadUsers();
@@ -84,5 +86,82 @@ class AuthState extends ChangeNotifier {
     
     await _saveUsers();
     notifyListeners();
+  }
+
+  Future<void> updateParentPasscode(String passcode) async {
+    if (!_isLoggedIn || _currentUser == null) return;
+    _currentUser!.parentPasscode = passcode;
+    await _saveUsers();
+    notifyListeners();
+  }
+
+  Duration get totalScreenTime => _currentUser?.totalScreenTime ?? Duration.zero;
+
+  set totalScreenTime(Duration time) {
+    if (_currentUser == null) return;
+    _currentUser!.totalScreenTime = time;
+    _saveUsers();
+    notifyListeners();
+  }
+
+  Duration get dailyTimeLimit => _currentUser?.dailyTimeLimit ?? const Duration(hours: 1);
+
+  set dailyTimeLimit(Duration limit) {
+    if (_currentUser == null) return;
+    _currentUser!.dailyTimeLimit = limit;
+    _saveUsers();
+    notifyListeners();
+  }
+
+  TimeOfDay? get allowedStartTime => _currentUser?.allowedStartTime;
+
+  set allowedStartTime(TimeOfDay? time) {
+    if (_currentUser == null) return;
+    _currentUser!.allowedStartTime = time;
+    _saveUsers();
+    notifyListeners();
+  }
+
+  TimeOfDay? get allowedEndTime => _currentUser?.allowedEndTime;
+
+  set allowedEndTime(TimeOfDay? time) {
+    if (_currentUser == null) return;
+    _currentUser!.allowedEndTime = time;
+    _saveUsers();
+    notifyListeners();
+  }
+
+  DateTime? get lastScreenTimeUpdate => _currentUser?.lastScreenTimeUpdate;
+
+  void updateScreenTime(Duration delta) {
+    if (_currentUser == null) return;
+    _currentUser!.totalScreenTime += delta;
+    _currentUser!.lastScreenTimeUpdate = DateTime.now();
+    _saveUsers();
+    notifyListeners();
+  }
+
+  void resetDailyScreenTime() {
+    if (_currentUser == null) return;
+    _currentUser!.totalScreenTime = Duration.zero;
+    _currentUser!.lastScreenTimeUpdate = DateTime.now();
+    _saveUsers();
+    notifyListeners();
+  }
+
+  Future<void> markQuizCompleted() async {
+    if (_currentUser == null) return;
+    _currentUser!.quizCompletedOn = DateTime.now();
+    await _saveUsers();
+    notifyListeners();
+  }
+
+  bool hasCompletedQuizToday() {
+    if (_currentUser == null || _currentUser!.quizCompletedOn == null) return false;
+    final now = DateTime.now();
+    final lastCompleted = _currentUser!.quizCompletedOn!;
+    return now.year == lastCompleted.year &&
+           now.month == lastCompleted.month &&
+           now.day == lastCompleted.day;
   }
 }

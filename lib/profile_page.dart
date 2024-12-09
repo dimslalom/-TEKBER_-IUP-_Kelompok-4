@@ -115,6 +115,34 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _changeParentPasscode() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change Parent Passcode'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'New Passcode'),
+          obscureText: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<AuthState>().updateParentPasscode(controller.text);
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _logout() {
     context.read<AuthState>().logout();
     Navigator.of(context).pushReplacement(
@@ -446,6 +474,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   Colors.orange[700]!,
                   _changePassword,
                 ),
+                const SizedBox(height: 20),
+                _buildActionButton(
+                  'Change Parent Passcode',
+                  Colors.orange[700]!,
+                  _changeParentPasscode,
+                ),
               ],
             ),
           ),
@@ -476,6 +510,12 @@ class _ProfilePageState extends State<ProfilePage> {
               'Change Password',
               Colors.orange[700]!,
               _changePassword,
+            ),
+            const SizedBox(height: 20),
+            _buildActionButton(
+              'Change Parent Passcode',
+              Colors.orange[700]!,
+              _changeParentPasscode,
             ),
           ],
         ),

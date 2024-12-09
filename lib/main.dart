@@ -4,6 +4,9 @@ import 'auth_state.dart';
 import 'profile_page.dart';
 import 'course.dart';
 import 'dart:io';
+import 'quiz_page.dart';  // Add this import
+import 'parentsdashboard.dart'; // Import the Parent's Dashboard page
+import 'dart:async';  // Add this for Timer
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,10 +31,204 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.orange,
       ),
-      home: Consumer<AuthState>(
-        builder: (context, authState, child) {
-          return const Dashboard();
-        },
+      home: ScreenTimeTracker(
+        child: Consumer<AuthState>(
+          builder: (context, authState, child) {
+            return const Dashboard();
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class ScreenTimeTracker extends StatefulWidget {
+  final Widget child;
+
+  const ScreenTimeTracker({
+    required this.child,
+    super.key,
+  });
+
+  @override
+  State<ScreenTimeTracker> createState() => ScreenTimeTrackerState();
+}
+
+class ScreenTimeTrackerState extends State<ScreenTimeTracker> with WidgetsBindingObserver {
+  DateTime? _startTime;
+  Timer? _timer;
+  bool _isLocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startTracking();
+  }
+
+  void _startTracking() {
+    if (_timer == null) {
+      _startTime = DateTime.now();
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _updateScreenTime();
+      });
+    }
+  }
+
+  void _stopTracking() {
+    if (_timer != null) {
+      _updateScreenTime();
+      _timer!.cancel();
+      _timer = null;
+    }
+  }
+
+  void _updateScreenTime() {
+    final authState = context.read<AuthState>();
+
+    if (authState.isLoggedIn && !_isLocked) {
+      DateTime now = DateTime.now();
+      Duration elapsed = now.difference(_startTime ?? now);
+      _startTime = now;
+      authState.updateScreenTime(elapsed);
+
+      // Check if time limit is reached
+      if (authState.totalScreenTime >= authState.dailyTimeLimit) {
+        _lockApp();
+        return;
+      }
+
+      // Check if current time is within allowed time period
+      TimeOfDay nowTime = TimeOfDay.fromDateTime(now);
+      if (authState.allowedStartTime != null && authState.allowedEndTime != null) {
+        bool isWithinAllowedTime = _isWithinTimeRange(
+          nowTime,
+          authState.allowedStartTime!,
+          authState.allowedEndTime!,
+        );
+        if (!isWithinAllowedTime) {
+          _lockApp();
+          return;
+        }
+      }
+    }
+  }
+
+  bool _isWithinTimeRange(TimeOfDay now, TimeOfDay start, TimeOfDay end) {
+    int nowMinutes = now.hour * 60 + now.minute;
+    int startMinutes = start.hour * 60 + start.minute;
+    int endMinutes = end.hour * 60 + end.minute;
+
+    // Handle cases where end time is on the next day
+    if (endMinutes <= startMinutes) {
+      endMinutes += 24 * 60; // Add 24 hours worth of minutes
+      if (nowMinutes < startMinutes) {
+        nowMinutes += 24 * 60; // Add 24 hours if we're past midnight
+      }
+    }
+
+    return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+  }
+
+  void _lockApp() {
+    if (!_isLocked) {
+      _isLocked = true;
+      _stopTracking();
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (context) => LockedScreen(onUnlock: _unlockApp),
+      ));
+    }
+  }
+
+  void _unlockApp() {
+    setState(() {
+      _isLocked = false;
+      _startTracking();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTracking();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startTracking();
+      final authState = context.read<AuthState>();
+      DateTime? lastUpdate = authState.lastScreenTimeUpdate;
+      if (lastUpdate != null && !isSameDate(lastUpdate, DateTime.now())) {
+        authState.resetDailyScreenTime();
+      }
+    } else {
+      _stopTracking();
+    }
+  }
+
+  bool isSameDate(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
+class LockedScreen extends StatelessWidget {
+  final VoidCallback onUnlock;
+
+  const LockedScreen({required this.onUnlock, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final passcodeController = TextEditingController();
+    final authState = context.read<AuthState>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('App Locked'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Time limit reached or access restricted.\nEnter parent passcode to continue.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: passcodeController,
+                decoration: const InputDecoration(labelText: 'Parent Passcode'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  if (passcodeController.text == authState.parentPasscode) {
+                    Navigator.of(context).pop();
+                    onUnlock();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Incorrect passcode')),
+                    );
+                  }
+                },
+                child: const Text('Unlock'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -46,11 +243,26 @@ class Dashboard extends StatelessWidget {
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
+    } else if (section == 'Quiz') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const QuizPage()),
+      );
+    } else if (section == "Parent's Dashboard") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ParentDashboardPage()),
+      );
     }
   }
 
   Widget buildSectionButton(
       BuildContext context, String title, String subtitle) {
+    bool isQuizCompleted = false;
+    if (title == 'Quiz') {
+      isQuizCompleted = context.watch<AuthState>().hasCompletedQuizToday();
+    }
+
     return GestureDetector(
       onTap: () => navigateToHome(context, title),
       child: Container(
@@ -88,6 +300,8 @@ class Dashboard extends StatelessWidget {
                 ],
               ),
             ),
+            if (isQuizCompleted)
+              const Icon(Icons.check_circle, color: Colors.green),
             Icon(
               Icons.arrow_forward,
               color: Colors.white,
@@ -168,6 +382,11 @@ class Dashboard extends StatelessWidget {
                 context,
                 'Feedbacks',
                 'Receive personalized feedback to help you improve your learning journey!',
+              ),
+              buildSectionButton(
+                context,
+                "Parent's Dashboard",
+                'Access tools and reports to monitor and support your child\'s learning.',
               ),
             ],
           ),
